@@ -2,13 +2,10 @@
 % Please edit documentation in R/rstudio.R
 \name{allow_shiny}
 \alias{allow_shiny}
-\title{Simple check to determine if code is being run in RStudio with the shiny runtime
-internal function}
+\title{Simple check to determine if code is being run in RStudio with the shiny runtime}
 \usage{
 allow_shiny()
 }
 \description{
 Simple check to determine if code is being run in RStudio with the shiny runtime
-internal function
 }
-\keyword{internal}

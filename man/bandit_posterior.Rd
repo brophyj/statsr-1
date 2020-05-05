@@ -2,10 +2,13 @@
 % Please edit documentation in R/bandit_posterior.R
 \name{bandit_posterior}
 \alias{bandit_posterior}
-\title{bandit posterior}
+\title{plot_ss}
 \usage{
-bandit_posterior(data, prior = c(m1_good = 0.5, m2_good = 0.5),
-  win_probs = c(good = 1/2, bad = 1/3))
+bandit_posterior(
+  data,
+  prior = c(m1_good = 0.5, m2_good = 0.5),
+  win_probs = c(good = 1/2, bad = 1/3)
+)
 }
 \arguments{
 \item{data}{data frame containing win loss data}
@@ -26,10 +29,5 @@ which machine is good and the probability of the good and bad machine paying out
 data = data.frame(machine = c(1L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 2L), 
                   outcome = c("W", "L", "W", "L", "L", "W", "L", "L", "L", "W"))
 bandit_posterior(data)
-plot_bandit_posterior(data)
 
-}
-\seealso{
-\code{\link{bandit_sim}} to generate data and
-         \code{\link{plot_bandit_posterior}} to visualize.
 }

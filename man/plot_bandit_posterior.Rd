@@ -4,8 +4,11 @@
 \alias{plot_bandit_posterior}
 \title{plot_bandit_posterior}
 \usage{
-plot_bandit_posterior(data, prior = c(m1_good = 0.5, m2_good = 0.5),
-  win_probs = c(good = 1/2, bad = 1/3))
+plot_bandit_posterior(
+  data,
+  prior = c(m1_good = 0.5, m2_good = 0.5),
+  win_probs = c(good = 1/2, bad = 1/3)
+)
 }
 \arguments{
 \item{data}{data frame containing win loss data}
@@ -19,12 +22,8 @@ Generates a plot that shows the bandit posterior values as they are sequentially
 by the provided win / loss data.
 }
 \examples{
-# capture data from the `shiny` app `bandit_sim`.
 data = data.frame(machine = c(1L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 2L), 
                   outcome = c("W", "L", "W", "L", "L", "W", "L", "L", "L", "W"))
 plot_bandit_posterior(data)
 
-}
-\seealso{
-\code{\link{bandit_sim}} to generate data to use below
 }

@@ -2,17 +2,10 @@
 % Please edit documentation in R/ames_sampling_dist.R
 \name{ames_sampling_dist}
 \alias{ames_sampling_dist}
-\title{Simulate Sampling Distribution}
+\title{Run the ames sampling distribution shiny app}
 \usage{
 ames_sampling_dist()
 }
 \description{
-Run the interactive ames sampling distribution shiny app to 
-illustrate sampling distributions using variables from the `ames`
-dataset.
-}
-\examples{
-if (interactive()) { 
-  ames_sampling_dist()
-}
+Run the ames sampling distribution shiny app
 }

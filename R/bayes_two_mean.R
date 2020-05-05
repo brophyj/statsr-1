@@ -1,11 +1,11 @@
-bayes_ci_two_mean = function(y, x, mu_0=0, rscale=sqrt(2)/2,
-                             cred_level = 0.95,
-                             nsim = 10000,
+bayes_ci_two_mean = function(y, x, cred_level = 0.95,
                              verbose   = TRUE,
                              show_summ = verbose, 
                              show_res  = verbose,
                              show_plot = verbose)
 {
+  nsim = 1e6
+  
   gr1 = levels(x)[1]
   gr2 = levels(x)[2]
 
@@ -14,7 +14,6 @@ bayes_ci_two_mean = function(y, x, mu_0=0, rscale=sqrt(2)/2,
   
   n1 = length(y1)
   n2 = length(y2)
-  n = n1 + n2
   
   y_bar1 = mean(y1)
   y_bar2 = mean(y2)
@@ -24,9 +23,11 @@ bayes_ci_two_mean = function(y, x, mu_0=0, rscale=sqrt(2)/2,
   
   ci_percentiles = c( (1-cred_level)/2,1-(1-cred_level)/2)
   
-  JZS.post = BayesFactor::ttestBF(x=y1, y=y2, mu=mu_0, rscale=rscale,
-                             posterior=TRUE, iterations=nsim, progress=FALSE)
-  diff_post = JZS.post[, 2] 
+  mu_post1 = rt(nsim, df=n1-1)*s1/sqrt(n1) + y_bar1
+  mu_post2 = rt(nsim, df=n2-1)*s2/sqrt(n2) + y_bar2
+
+  diff_post = mu_post1 - mu_post2
+
   ci = quantile(diff_post, probs = ci_percentiles)
   
   den = coda_density(diff_post)
@@ -36,11 +37,6 @@ bayes_ci_two_mean = function(y, x, mu_0=0, rscale=sqrt(2)/2,
   post_mode   = den$x[which.max(den$y)]
 
 
-  stats = summary(JZS.post)$quantiles
-  rownames(stats) = c("overall mean", paste0("mu_",gr1," - mu_",gr2), "sigma^2", "effect size", "n_0")
-  stats["n_0",] = n/stats["n_0",ncol(stats):1]
-  
-  
   # print variable types
   if (show_summ)
   {
@@ -50,22 +46,20 @@ bayes_ci_two_mean = function(y, x, mu_0=0, rscale=sqrt(2)/2,
   
     cat(paste0("n_", gr1, " = ", n1, ", y_bar_", gr1, " = ", round(y_bar1, 4), ", s_", gr1, " = ", round(s1, 4), "\n"))
     cat(paste0("n_", gr2, " = ", n2, ", y_bar_", gr2, " = ", round(y_bar2, 4), ", s_", gr2, " = ", round(s2, 4), "\n"))
-    cat("(Assuming Zellner-Siow Cauchy prior for difference in means)\n")
-    cat("(Assuming independent Jeffrey's priors for overall mean and variance)\n")
+    cat("(Assuming independent Jeffrey's priors for mu and sigma^2)\n")
     cat("\n")
-    cat("\nPosterior Summaries\n")
-    print(stats)  
   }
 
 
 
   if(show_res)
   {
-   
     cat(paste0(cred_level*100, "% Cred. Int.: (", round(ci[1], 4), " , ", round(ci[2], 4), ")\n"))
 
     cat("\n")
-      
+    cat("Post. mean   =", round(post_mean,4),   "\n")
+    cat("Post. median =", round(post_median,4), "\n")
+    cat("Post. mode   =", round(post_mode,4),   "\n")    
   }
 
   
@@ -96,31 +90,27 @@ bayes_ci_two_mean = function(y, x, mu_0=0, rscale=sqrt(2)/2,
   }
 
   # return
-  res = list(
-      mu_diff = diff_post,
+  return( invisible(
+    list(
+      post        = diff_post,
       post_den    = den,
       post_mean   = post_mean,
       post_median = post_median,
       post_mode   = post_mode,
-      cred_level  = cred_level,
-      ci          = ci,
-      samples     = JZS.post,
-      summary     = stats
-  )
-  
-  if (show_plot) res$plot = pos_plot
-  return( invisible(res))
+      cred_level = cred_level,
+      ci = ci
+    )
+  ))
 }
 
 
 
 
 
-bayes_ht_two_mean = function(y, x, null = 0, rscale=sqrt(2)/2, 
+bayes_ht_two_mean = function(y, x, null = 0, 
                              alternative = "twosided", 
                              cred_level = 0.95,
                              hypothesis_prior = NULL,
-                             nsim = 10000,
                              verbose   = TRUE,
                              show_summ = verbose, 
                              show_res  = verbose,
@@ -161,14 +151,15 @@ bayes_ht_two_mean = function(y, x, null = 0, rscale=sqrt(2)/2,
   
     cat(paste0("n_", gr1, " = ", n1, ", y_bar_", gr1, " = ", round(y_bar1, 4), ", s_", gr1, " = ", round(s1, 4), "\n"))
     cat(paste0("n_", gr2, " = ", n2, ", y_bar_", gr2, " = ", round(y_bar2, 4), ", s_", gr2, " = ", round(s2, 4), "\n"))
-    cat("(Assuming Zellner-Siow Cauchy prior on the difference of means. )\n")
-    cat("(Assuming independent Jeffreys prior on the overall mean and variance. )\n")
+    cat("(Assuming intrinsic prior on parameters)\n")
   }
 
-  BFout = BayesFactor::ttestBF(x=y1, y=y2, mu=null, rscale=rscale) 
-  BF = exp(BFout@bayesFactor$bf)
+  BF = behren_fisher_intrinsic_BF(ybar = c(y_bar1, y_bar2), 
+                                  s2 = c(s1, s2)^2, 
+                                  n = c(n1, n2),
+                                  max_eval=10^6, low_v=0.001, up_v=100, m=4)
+
   res = list(hypothesis_prior = hypothesis_prior)
-  res$BayesFactor = BFout
   
   if (BF < 1)
   {
@@ -200,8 +191,10 @@ bayes_ht_two_mean = function(y, x, null = 0, rscale=sqrt(2)/2,
       cat("H2: mu_", gr1, " ", alt_sign, " mu_", gr2, "\n", sep="")
       cat("\n")
 
-      cat("Priors: ")
-      cat("P(H1) =",prior_H1, " ")
+      cat("Priors:\n")
+      #cat("P(p_",gr1,") ~ Beta(a=",prior_a1,",b=",prior_b1,")\n",sep="")
+      #cat("P(p_",gr2,") ~ Beta(a=",prior_a2,",b=",prior_b2,")\n",sep="")
+      cat("P(H1) =",prior_H1,"\n")
       cat("P(H2) =",prior_H2,"\n")
       cat("\n")
       
@@ -218,14 +211,45 @@ bayes_ht_two_mean = function(y, x, null = 0, rscale=sqrt(2)/2,
 
   if (show_plot)
   {
-    if (show_res | show_summ) cat("\nPosterior summaries for under H2:\n")
-      
-    samples = bayes_ci_two_mean(y, x, null, rscale=rscale, 
-                                cred_level, nsim,
-                                verbose=F,show_summ, show_res,show_plot)
-    res = append(res, samples)
+    post = behren_fisher_intrinsic_BF_post_gibbs(ybar = c(y_bar1, y_bar2), 
+                                                 s2 = c(s1, s2)^2, 
+                                                 n = c(n1, n2), 
+                                                 nsim=10000, burnin=1000)
+
+    ci_percentiles = c( (1-cred_level)/2,1-(1-cred_level)/2)
+    diff_post = post$mu1 - post$mu2
+    ci = quantile(diff_post, probs = ci_percentiles)
+    den = coda_density(diff_post)
+
+    res$post     = diff_post
+    res$post_den = den
+
+
+    d_H2 = data.frame(diff = den$x, dens = den$y * res$post_H2 / max(den$y)) 
+
+    li = min(which(d_H2$diff >= ci[1]))  
+    ui = max(which(d_H2$diff <  ci[2]))
+
+    ci_poly = data.frame(diff = c(d_H2$diff[c(li,li:ui,ui)]), 
+                         dens = c(0, d_H2$dens[li:ui], 0))
+
+    ci_interval = data.frame(diff = ci, dens = c(0,0))
+
+    H1_line = data.frame(diff=c(0,0), dens=c(0,res$post_H1))
+
+    pos_plot = ggplot(d_H2, aes_string(x="diff", y="dens")) + 
+               geom_line() +
+               ylab("Density") +  
+               xlab(paste0("mu_",gr1," - mu_",gr2)) +
+               #geom_line(data  = ci_interval, size=1.5) +
+               geom_line(data  = H1_line, size=1.5, col="blue", alpha=0.5) +
+               #geom_point(data = ci_interval, size=2) +
+               geom_polygon(data = ci_poly, alpha=0.5)
+
+
+    print(pos_plot)
   }
-    
+  
   # return
   return(invisible(res)) 
 }

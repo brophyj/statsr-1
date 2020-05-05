@@ -4,126 +4,38 @@
 #' @param data Name of data frame that y and x are in
 #' @param type of inference; "ci" (credible interval) or "ht" (hypothesis test)
 #' @param statistic population parameter to estimate: mean or proportion
-#' @param method  of inference; "theoretical" (quantile based) or "simulation"
 #' @param success which level of the categorical variable to call "success", i.e. do inference on
 #' @param null null value for the hypothesis test
 #' @param cred_level confidence level, value between 0 and 1
 #' @param alternative direction of the alternative hypothesis; "less","greater", or "twosided"
-#' @param nsim number of Monte Carlo draws; default is 10,000
 #' @param verbose whether output should be verbose or not, default is TRUE
 #' @param show_summ print summary stats, set to verbose by default
 #' @param show_res print results, set to verbose by default
 #' @param show_plot print inference plot, set to verbose by default
 #' @param hypothesis_prior discrete prior for H1 and H2, default is the uniform prior: c(H1=0.5,H2=0.5)
-#' @param prior_family character string representing default priors for inference or testing ("JSZ", "JUI","ref"). 
-#'        See notes for details.
-#' @param n_0  n_0 is the prior sample size in the Normal prior for the mean
-#' @param mu_0 the prior mean in one sample mean problems or the prior difference 
-#' in two sample problems.  For hypothesis testing, this is all the null value
-#' if null is not supplied.
-#' @param s_0 the prior standard deviation of the data for the conjugate Gamma prior on 1/sigma^2
-#' @param v_0 prior degrees of freedom for conjugate Gamma prior on 1/sigma^2
-#' @param rscale is the scaling parameter in the Cauchy prior:  1/n_0 ~ Gamma(1/2, rscale^2/2)
-#'   leads to mu_0  having a Cauchy(0, rscale^2*sigma^2) prior distribution for prior_family="JZS".         
+#' @param n_0 Prior sample size for calculating the Bayes factor of the twosided test of one mean
 #' @param beta_prior,beta_prior1,beta_prior2 beta priors for p (or p_1 and p_2) for one or two proportion inference
-#' @return Results of inference task performed.
-#' 
-#' 
-#' @note For inference and testing for normal means several default options are available.
-#'  "JZS"  corresponds to using the Jeffreys reference prior on sigma^2, p(sigma^2) = 1/sigma^2, 
-#'  and the Zellner-Siow Cauchy prior on the standardized effect size mu/sigma or ( mu_1 - mu_2)/sigma
-#'   with a location of mu_0 and scale  rscale.  The "JUI" option also uses the
-#'   Jeffreys reference prior on sigma^2, but the Unit Information prior on the
-#'  standardized effect, N(mu_0, 1).  The option "ref" uses the improper uniform prior  on 
-#'  the standardized effect and the Jeffreys reference prior on  sigma^2.  The latter 
-#'  cannot be used for hypothesis testing due to the ill-determination of Bayes
-#'  factors.  Finally "NG" corresponds to the conjugate Normal-Gamma prior.
-#'  
-#'     
-#' @examples 
-#' 
-#' # inference for the mean from a single normal population using
-#' # Jeffreys Reference prior, p(mu, sigma^2) = 1/sigma^2
-#' 
-#' library(BayesFactor)
-#' data(tapwater)
-#' 
-#' # Calculate 95% CI using quantiles from Student t derived from ref prior
-#' bayes_inference(tthm, data=tapwater,
-#'                 statistic="mean", 
-#'                 type="ci", prior_family="ref",
-#'                 method="theoretical")
-#'\donttest{ 
-#' # Calculate 95% CI using simulation from Student t using an informative mean and ref
-#' # prior for sigma^2
-#' 
-#' bayes_inference(tthm, data=tapwater,
-#'                 statistic="mean", mu_0=9.8,
-#'                 type="ci",  prior_family="JUI",
-#'                 method="theo")
-#' 
-#'# Calculate 95% CI using simulation  with the 
-#'# Cauchy prior on mu and reference prior on sigma^2
-#' 
-#' 
-#' bayes_inference(tthm, data=tapwater,
-#'                 statistic="mean", mu_0 = 9.8, rscale=sqrt(2)/2,
-#'                 type="ci", prior_family="JZS",
-#'                 method="simulation")
-#' 
-#'                 
-#' # Bayesian t-test mu = 0 with ZJS prior  
-#' bayes_inference(tthm, data=tapwater,
-#'                 statistic="mean",
-#'                 type="ht", alternative="twosided", null=80,
-#'                 prior_family="JZS",
-#'                 method="sim")
-#'                 
-#'                
-#' # Bayesian t-test for two means 
-#' 
-#' data(chickwts)
-#' chickwts = chickwts[chickwts$feed %in% c("horsebean","linseed"),]
-#' # Drop unused factor levels
-#' chickwts$feed = factor(chickwts$feed)                
-#' bayes_inference(y=weight, x=feed, data=chickwts,
-#'                 statistic="mean", mu_0 = 0, alt="twosided",
-#'                 type="ht", prior_family="JZS",
-#'                 method="simulation")               
-#' }
-#' @references \url{https://statswithr.github.io/book/}
-#' @importFrom BayesFactor ttestBF
+#' @return Results of inference task performed
 #' @export
 
 
 bayes_inference = function(y, x = NULL, data,
                            type = c("ci", "ht"),
                            statistic = c("mean", "proportion"),
-                           method =  c("theoretical", "simulation"),
                            success = NULL, 
                            null = NULL, 
                            cred_level = 0.95,
                            alternative = c("twosided","less","greater"),
                            hypothesis_prior = c(H1=0.5,H2=0.5),
-                           prior_family="JZS",
-                           n_0 = 1, mu_0 = null, s_0 = 0, v_0 = -1,
-                           rscale=1,
+                           n_0 = 1,
                            beta_prior  = NULL,
                            beta_prior1 = NULL,
                            beta_prior2 = NULL,
-                           nsim = 10000,
                            verbose = TRUE,
                            show_summ = verbose,
                            show_res = verbose, 
                            show_plot = verbose)
 {
-    installed_packages <- names(utils::installed.packages()[,"Package"])
-    required_packages <- c("ggplot2", "gridExtra", "BayesFactor", "Matrix")
-    if(!all(required_packages %in% installed_packages)){
-        missing_packages <- required_packages[which(!(required_packages %in% installed_packages))]
-        stop(paste("The following required packages are not installed:", missing_packages,
-                   "Please install these packages before running the inference function."), call. = FALSE)
-    }    
   # save axis labels for use later
   y_name = paste(substitute(y))
   x_name = paste(substitute(x))
@@ -187,15 +99,6 @@ bayes_inference = function(y, x = NULL, data,
     stop("Missing statistic: mean or proportion", call. = FALSE)
   }
 
-  # error: method isn't theoretical or simulation
-  method_list = c("theoretical", "simulation")
-  method = tolower(gsub("\\s","", method))
-  which_method = pmatch(method, method_list)
-  if(is.na(which_method)){
-      stop("Method should be theoretical or simulation", call. = FALSE)
-  }
-  method = method_list[which_method]
-  
   # Check type
   stopifnot(length(type) == 1 & is.character(type))
   if(!type %in% c("ci", "ht"))
@@ -248,126 +151,29 @@ bayes_inference = function(y, x = NULL, data,
   if (cred_level > 1 | cred_level < 0) {
     stop("Credible level must be between 0 and 1.")
   }
-  
-  # check prior family
-  if (y_type == "numerical") {
-  # error: wrong prior_family
-  family_list = c("JZS","JUI", "ref", "NG")
- # prior_family = tolower(gsub("\\s","", prior_family))
-  which_prior = pmatch(prior_family, family_list)
-  if(is.na(which_prior)){
-      stop("Method should be one of JZS, NG, JUI, or ref", call. = FALSE)
-  }
-  prior_family = family_list[which_prior]
-  }
 
   # only one variable 
   if(is.null(x))
   {
     y = y[!is.na(y)]
 
-    if(statistic == "mean" & y_type == "numerical") { 
-      if (prior_family == "ref") {
-          n_0 = mu_0 = s_0  =0.0
-          v_0 = -1}
-      if (prior_family == "JUI") {
-          n_0 = 1
-          s_0 = 0
-          v_0 = -1}
-      if (prior_family == "JZS") {
-           method="simulation"
-      }
-            
-    # make sure improper prior is set correctly 
-     if (prior_family == "NG") {
-      if (n_0 == 0)  mu_0 = 0 
-      if (v_0 <= 0) s_0 = 0 }
-    
-     if(is.null(null)) {
-        if (is.null(mu_0)) stop("Error: must specify prior mean mu_0\n")
-        null = mu_0
-        }
-     if(is.null(mu_0)) mu_0 = null    
-     if(mu_0 != null) stop("Error: null must be the same as mu_0\n")
-
-    # add more checks?
-     if(type == "ci")  {
-       if (method=="theoretical")   {
-          return(invisible(
-             bayes_ci_single_mean_theo(y, cred_level,
-                                       n_0, mu_0, s_0, v_0, 
-                                       verbose, show_summ,
-                                       show_res, show_plot)
-            )) }            
-        if (method=="simulation")   {
-            if (prior_family != "JZS") {
-              return(invisible(
-                  bayes_ci_single_mean_sim(y, cred_level,
-                                            n_0, mu_0, s_0, v_0, nsim,
-                                            verbose, show_summ, show_res, show_plot)
-              ))  }
-            else {
-              return(invisible(
-                  bayes_ci_single_mean_JZS(y,
-                                           cred_level,
-                                           mu_0,  rscale, 
-                                           nsim,
-                                           verbose, 
-                                           show_summ,
-                                           show_res, 
-                                           show_plot)
-              )) }
-          }
-     }
-     if(type == "ht") {
-        if (n_0 == 0) stop("\nImproper priors cannot be used as a prior on mu for hypothesis testing\nPlease use n_0 > 0 or use a different default prior_family, such as JZS.")
-        if (s_0 != 0 & v_0 != -1) warning("\nInformative priors on sigma^2 are not available, switching to Jeffreys reference prior for sigma^2")
-
-        if (method=="theoretical") {
-           return(invisible( 
-            bayes_ht_single_mean_theo(y, null=null,
-                                      alternative=alternative,
-                                      cred_level=cred_level,
-                                      mu_0=mu_0, n_0=n_0,
-                                      hypothesis_prior=hypothesis_prior,
-                                      verbose=verbose,
-                                      show_summ=show_summ, 
-                                      show_res=show_res, 
-                                      show_plot=show_plot)
-           ))}
-        if (method=="simulation") {
-          if (prior_family != "JZS") {
-                 return(invisible(
-                     bayes_ht_single_mean_sim(y=y, null=null,
-                                              hypothesis_prior=hypothesis_prior,
-                                              alternative=alternative,
-                                              cred_level=cred_level,
-                                              mu_0=mu_0,n_0=n_0,
-                                              nsim,
-                                              verbose=verbose,
-                                              show_summ=show_summ, 
-                                              show_res=show_res, 
-                                              show_plot=show_plot)
-                 ))  }
-          else {
-             
-             return(invisible( 
-                 bayes_ht_single_mean_JZS(y=y, null=null,
-                                          hypothesis_prior=hypothesis_prior,
-                                          alternative=alternative,
-                                          cred_level=cred_level,
-                                          mu_0=mu_0, rscale=rscale,
-                                          nsim,
-                                          verbose=verbose,
-                                          show_summ=show_summ, 
-                                          show_res=show_res, 
-                                          show_plot=show_plot)
-             ))}
-         }
-     }
+    if(statistic == "mean" & y_type == "numerical")
+    {
+      if(type == "ci")
+        return(invisible(
+          bayes_ci_single_mean(y, cred_level, 
+                               verbose, show_summ, show_res, show_plot)
+        ))
+      if(type == "ht")
+        return(invisible( 
+          bayes_ht_single_mean(y, null, alternative, cred_level, n_0, hypothesis_prior, 
+                               verbose, show_summ, show_res, show_plot)
+          ))
     }
-    
-    if(statistic == "proportion" & y_type == "categorical" & y_levels == 2) {
+
+    if(statistic == "proportion" & y_type == "categorical" & y_levels == 2)
+    {
+
 
       if(type == "ci")
         return(invisible(
@@ -393,23 +199,15 @@ bayes_inference = function(y, x = NULL, data,
     {
       if(type == "ci")
         return(invisible(
-          bayes_ci_two_mean(y, x, mu_0, rscale, cred_level, nsim,
+          bayes_ci_two_mean(y, x, cred_level,
                             verbose, show_summ, show_res, show_plot)
         ))
-      if(type == "ht") {
-         if(is.null(null)) {
-              if (is.null(mu_0)) stop("Error: must specify prior mean mu_0\n")
-              null = mu_0
-          }
-          if(is.null(mu_0)) mu_0 = null    
-          if(mu_0 != null) stop("Error: null must be the same as mu_0\n")
-          
+      if(type == "ht")
         return(invisible(
-          bayes_ht_two_mean(y, x, null, rscale, alternative, cred_level, 
-                            hypothesis_prior, nsim,
+          bayes_ht_two_mean(y, x, null, alternative, cred_level, 
+                            hypothesis_prior, 
                             verbose, show_summ, show_res, show_plot)
         ))
-        }
     }
 
     if(statistic == "proportion" & y_type == "categorical" & y_levels == 2)

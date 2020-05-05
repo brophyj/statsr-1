@@ -1,9 +1,9 @@
-.fax-slot-machine::before {
+.fax-slot-machine: before {
     content: "\1f3b0"
 }
 
 body {
-    counter-reset: question 0 exercise 0;
+    counter-reset: li; /* initialize counter named li */
 }
 
 h1 {
@@ -21,75 +21,77 @@ hr {
     border: 1px solid #357FAA;
 }
 
-.question, .exercise {
-    position: relative;
-    margin: 2em;
-    padding: 2em 20px 1em 20px;
+ol {
+    margin-left: 0; /* Remove the default left margin */
+    padding-left: 0; /* Remove the default left padding */
 }
 
-.question::before, .exercise::before {
+ol > li {
+    position: relative; /* Create a positioning context */
+    margin: 0 0 10px 2em; /* Give each list item a left margin to make room for the numbers */
+    padding: 10px 80px; /* Add some spacing around the content */
+    list-style: none; /* Disable the normal item numbering */
+    border-top: 2px solid #317EAC;
+    background: rgba(49, 126, 172, 0.1);
+}
+
+ol > li: before {
+    content: "Question " counter(li);
+    counter-increment: li;
     position: absolute;
-    top: -1em;
+    top: -2px;
     left: -2em;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
     width: 7em;
-    padding: 5px 0;
-    color: #ffffff;
+    margin-right: 8px;
+    padding: 4px;
+    border-top: 2px solid #317EAC;
+    color: #fff;
+    background: #317EAC;
     font-weight: bold;
     font-family: "Helvetica Neue", Arial, sans-serif;
     text-align: center;
 }
 
-.question {
-    counter-increment: question;
+li ol,
+li ul {margin-top: 6px;}
+
+ol ol{
+    counter-reset: subitem;
+}
+
+li li{
+    border-top: 0 solid #317EAC;
     background: rgb(49, 126, 172);
-    background: rgba(49, 126, 172, 0.1);
+    background: rgba(49, 126, 172, 0);
+    padding: 0 0; /* No spacing around the content */
 }
 
-.question::before {
-    content: "Question " counter(question);
-    background: #317EAC;
-    background: rgb(49, 126, 172);
+li li: before{
+    content: counter(subitem, upper-alpha) '. ';
+    counter-increment: subitem;
+    position: absolute;
+    top: -2px;
+    left: -2em;
+    /*-moz-box-sizing: border-box;*/
+    /*-webkit-box-sizing: border-box;*/
+    box-sizing: content-box;
+    width: 1em;
+    margin-right: 4px;
+    padding: 2px;
+    color: #317EAC;
+    background: transparent;
+    font-weight: bold;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    text-align: center;
 }
 
-.exercise {
-  counter-increment: exercise;
-  background: rgb(92, 184, 92);
-  background: rgba(92, 184, 92, 0.1);
-}
-
-.exercise::before {
-    content: "Exercise " counter(exercise);
-    background: rgb(92, 184, 92);
-}
-
-
-.question ul {
-  counter-reset: choice;
-  margin-left: 1.5em;
-  list-style-type: none;
-}
-
-.question li {
-    margin-top: 20px;
-    counter-increment: choice;
-}
-
-.question li::before {
-  content: counter(choice, upper-alpha) '. ';
-  color: #317EAC;
-  font-weight: bold;
-  font-family: "Helvetica Neue", Arial, sans-serif;
-  text-align: left;
-  width: 2em;
-  margin-left: -2em;
-  display: inline-block;
-}
-
-
-.instructions {   
+#instructions { 
     margin-top: 30px;
-    /*margin-bottom: 30px;*/
-    padding: 10px 10px 0;
+    margin-bottom: 30px;
+    padding: 10px 10px;
     border: 1px solid rgb(0, 102, 102);
     border: 1px solid rgba(0, 102, 102, 0.2);
     border-radius: 5px;
@@ -99,10 +101,10 @@ hr {
     background: rgba(204, 255, 255, 0.1);
 }
 
-.license { 
+#license { 
     margin-top: 30px;
     margin-bottom: 30px;
-    padding: 10px 10px 0;
+    padding: 10px 10px;
     border: 1px solid rgb(76, 114, 29);
     border: 1px solid rgba(76, 114, 29, 0.2);
     border-radius: 5px;
@@ -120,4 +122,11 @@ hr {
     font-size: 10pt;
 }
 
-
+.exercise {
+    position: relative; /* Create a positioning context */
+    margin: 0 0 10px 0; /* Give each list item a left margin to make room for the numbers */
+    padding: 10px 30px; /* Add some spacing around the content */
+    border-top: 2px solid #35CD4B;
+    background: rgb(49, 199, 58);
+    background: rgba(49, 199, 58, 0.1);
+}

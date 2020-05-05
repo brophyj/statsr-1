@@ -1,39 +1,28 @@
 #' plot_ss
 #'
-#' An interactive shiny app that will generate a scatterplot of two variables, then
-#' allow the user to click the plot in two locations to draw a best fitting line.
+#' An interactive function that will generate a scatterplot of two variables, then
+#' allow the user to click the plot in two locations to draw a best fit line.
 #' Residuals are drawn by default; boxes representing the squared residuals are
 #' optional.
 #'
-#' @param x the name of numerical vector 1 on x-axis
-#' @param y the name of numerical vector 2 on y-axis
+#' @param x the name of numerical vector 1
+#' @param y the name of numerical vector 2
 #' @param data the dataframe in which x and y can be found
 #' @param showSquares logical option to show boxes representing the squared residuals
 #' @param leastSquares logical option to bypass point entry and automatically draw the least squares line
-#' @examples 
-#' \dontrun{plot_ss}
 #' @export
 
 plot_ss <- function(x, y, data, showSquares = FALSE, leastSquares = FALSE){
-    missingargs <- missing(x) | missing(y) | missing(data)
-    if (missingargs) stop(simpleError("missing arguments x, y or data"))
     
     xlab <- paste(substitute(x))
     ylab <- paste(substitute(y))
     
     x <- eval(substitute(x), data)
     y <- eval(substitute(y), data)
+    plot(y ~ x, asp = 1, pch = 16, xlab = xlab, ylab = ylab) 
     
-    data=na.omit(data.frame(x=x, y=y))
-    x = data[["x"]]
-    y = data[["y"]]
-    
-    plot(y ~ x, data=data,
-         asp = 1, pch = 16, xlab = xlab, ylab = ylab) 
-    
-   
     if(leastSquares){
-        m1 <- lm(y ~ x, data=data)
+        m1 <- lm(y ~ x)
         y.hat <- m1$fit
     } else{
         cat("Click two points to make a line.")
@@ -43,13 +32,12 @@ plot_ss <- function(x, y, data, showSquares = FALSE, leastSquares = FALSE){
         points(pt2$x, pt2$y, pch = 4)
         pts <- data.frame("x" = c(pt1$x, pt2$x),"y" = c(pt1$y, pt2$y))
         m1 <- lm(y ~ x, data = pts)
-        y.hat <- predict(m1, newdata = data)
+        y.hat <- predict(m1, newdata = data.frame(x))
     }
     r <- y - y.hat
     abline(m1)
     
     oSide <- x - r
-    
     LLim <- par()$usr[1]
     RLim <- par()$usr[2]
     oSide[oSide < LLim | oSide > RLim] <- c(x + r)[oSide < LLim | oSide > RLim] # move boxes to avoid margins

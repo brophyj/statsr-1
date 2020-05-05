@@ -4,14 +4,29 @@
 \alias{inference}
 \title{Hypothesis tests and confidence intervals}
 \usage{
-inference(y, x = NULL, data, type = c("ci", "ht"), statistic = c("mean",
-  "median", "proportion"), success = NULL, order = NULL,
-  method = c("theoretical", "simulation"), null = NULL,
-  alternative = c("less", "greater", "twosided"), sig_level = 0.05,
-  conf_level = 0.95, boot_method = c("perc", "se"), nsim = 15000,
-  seed = NULL, verbose = TRUE, show_var_types = verbose,
-  show_summ_stats = verbose, show_eda_plot = verbose,
-  show_inf_plot = verbose, show_res = verbose)
+inference(
+  y,
+  x = NULL,
+  data,
+  type = c("ci", "ht"),
+  statistic = c("mean", "median", "proportion"),
+  success = NULL,
+  order = NULL,
+  method = c("theoretical", "simulation"),
+  null = NULL,
+  alternative = c("less", "greater", "twosided"),
+  sig_level = 0.05,
+  conf_level = 0.95,
+  boot_method = c("perc", "se"),
+  nsim = 15000,
+  seed = NULL,
+  verbose = TRUE,
+  show_var_types = verbose,
+  show_summ_stats = verbose,
+  show_eda_plot = verbose,
+  show_inf_plot = verbose,
+  show_res = verbose
+)
 }
 \arguments{
 \item{y}{Response variable, can be numerical or categorical}
@@ -61,32 +76,4 @@ Results of inference task performed
 }
 \description{
 Hypothesis tests and confidence intervals
-}
-\examples{
-data(tapwater)
-
-# Calculate 95\% CI using quantiles using a Student t distribution
-inference(tthm, data=tapwater,
-                statistic="mean", 
-                type="ci",
-                method="theoretical")
-                
-inference(tthm, data=tapwater,
-                statistic="mean", 
-                type="ci",
-                boot_method = "perc",
-                method="simulation")
-                
-# Inference for a proportion
-# Calculate 95\% confidence intervals for the proportion of atheists
-
-data("atheism")
-library("dplyr")
-us12 <- atheism \%>\%
-        filter(nationality == "United States" , atheism$year == "2012")
-inference(y = response, data = us12, statistic = "proportion",
-          type = "ci",
-          method = "theoretical", 
-          success = "atheist")
-                
 }

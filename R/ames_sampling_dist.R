@@ -1,15 +1,5 @@
-#' Simulate Sampling Distribution
+#' Run the ames sampling distribution shiny app
 #' 
-#' Run the interactive ames sampling distribution shiny app to 
-#' illustrate sampling distributions using variables from the `ames`
-#' dataset.
-#' 
-#'
-#' @examples
-#' if (interactive()) { 
-#'   ames_sampling_dist()
-#' }
-
 #' @export
 
 ames_sampling_dist = function()
@@ -52,7 +42,7 @@ ames_sampling_dist = function()
         x_min <- quantile(ames[[input$selected_var]], 0.1)
         x_max <- quantile(ames[[input$selected_var]], 0.9)
         
-        ggplot(sampling_dist(), aes_string(x = "x_bar")) +
+        ggplot(sampling_dist(), aes(x = x_bar)) +
           geom_histogram(na.rm=TRUE, bins=50) +
           xlim(x_min, x_max) +
           ylim(0, input$n_sim * 0.35) +

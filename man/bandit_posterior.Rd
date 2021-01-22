@@ -2,7 +2,7 @@
 % Please edit documentation in R/bandit_posterior.R
 \name{bandit_posterior}
 \alias{bandit_posterior}
-\title{plot_ss}
+\title{bandit posterior}
 \usage{
 bandit_posterior(
   data,
@@ -29,5 +29,10 @@ which machine is good and the probability of the good and bad machine paying out
 data = data.frame(machine = c(1L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L, 2L), 
                   outcome = c("W", "L", "W", "L", "L", "W", "L", "L", "L", "W"))
 bandit_posterior(data)
+plot_bandit_posterior(data)
 
+}
+\seealso{
+\code{\link{bandit_sim}} to generate data and
+         \code{\link{plot_bandit_posterior}} to visualize.
 }

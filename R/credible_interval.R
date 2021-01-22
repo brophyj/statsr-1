@@ -1,6 +1,17 @@
-#' Run the Credible Interval shiny app
+#' Credible Interval shiny app
+#' 
+#' Run the `shiny` credible interval app to generate credible
+#' intervals under the prior or posterior distribution for 
+#' Beta, Gamma and Gaussian families.  Sliders are used to
+#' adjust the hyperparameters in the distribution so that one
+#' may see how the resulting credible intervals and plotted 
+#' distributions change.
 #' 
 #' @export
+#' @examples 
+#' if (interactive()) {
+#'    credible_interval_app()
+#' }
 
 credible_interval_app = function()
 {
@@ -145,6 +156,7 @@ credible_interval_app = function()
           ggplot(d, aes_string(x='x', y='y')) + 
             ylab("Density") +
             geom_line() +
+            geom_area(fill="blue", alpha=0.2) +
             geom_polygon(data = ci_region, aes_string(x='x',y='y'),alpha=0.5) +
             geom_line(data = ci_interval(), size=1.5) +
             geom_point(data = ci_interval(), size=2) +
@@ -183,6 +195,7 @@ credible_interval_app = function()
           ggplot(d, aes_string(x='x', y='y')) + 
             ylab("Density") +
             geom_line() +
+            geom_area(fill="blue", alpha=0.2) +
             ggtitle(paste0("Prior Distribution of ",param))
         })
     },
